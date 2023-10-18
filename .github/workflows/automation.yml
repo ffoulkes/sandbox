@@ -1,0 +1,266 @@
+name: "P4 Control Plane automation"
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+  workflow_dispatch:
+
+concurrency:
+  # If workflow for PR or push is already running, stop it and start a new one.
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SDE_PREFIX: p4-dev/dpdk-sde
+  # Full version
+  SDE_FULL_ARTIFACT: dpdk-sde-full
+  SDE_FULL_TARBALL: dpdk-sde-full-ubuntu-latest.tar.gz
+  # Development version
+  SDE_DEV_ARTIFACT: dpdk-sde-dev
+  SDE_DEV_TARBALL: dpdk-sde-dev-ubuntu-latest.tar.gz
+  # Version to download
+  SDE_ARTIFACT: dpdk-sde-full
+  SDE_TARBALL: dpdk-sde-full-ubuntu-latest.tar.gz
+
+  DEPS_PREFIX: p4-dev/x86-deps
+  DEPS_ARTIFACT: stratum-deps
+  DEPS_TARBALL: deps-ubuntu-latest.tar.gz
+
+  OVS_BUILD: ovs/build
+  OVS_PREFIX: p4-dev/ovs
+  OVS_ARTIFACT: p4cp-ovs
+  OVS_TARBALL: ovs-ubuntu-latest.tar.gz
+
+  P4CP_PREFIX: p4-dev/p4cp-dpdk
+  P4CP_ARTIFACT: p4cp-dpdk
+  P4CP_TARBALL: p4cp-dpdk-ubuntu-latest.tar.gz
+
+jobs:
+  #---------------------------------------------------------------------
+  # 1-build_dpdk_sde
+  #---------------------------------------------------------------------
+  build_dpdk_sde:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone p4-dpdk-target
+        uses: actions/checkout@v3
+        with:
+          repository: p4lang/p4-dpdk-target
+          submodules: recursive
+          path: dpdk-target
+
+      - name: Install dpdk-sde dependencies
+        working-directory: dpdk-target/tools/setup
+        run: |
+          sudo apt update -y
+          # Might be able to pare this down, based on the known manifest
+          # of the Ubuntu 22.04 runner and the fact that we building
+          # the SDE, not running it.
+          python install_dep.py
+
+      - name: Build p4-dpdk-target
+        working-directory: dpdk-target
+        run: |
+          export SDE=$(realpath .)
+          export SDE_INSTALL=$GITHUB_WORKSPACE/$SDE_PREFIX
+          mkdir -pv $SDE_INSTALL
+          ./autogen.sh
+          ./configure --prefix=$SDE_INSTALL
+          make
+          make install
+
+      - name: Create dpdk-sde tarball (full)
+        run: tar -czf $SDE_FULL_TARBALL $SDE_PREFIX
+
+      - name: Upload dpdk-sde tarball (full)
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.SDE_FULL_ARTIFACT }}
+          path: ${{ env.SDE_FULL_TARBALL }}
+          if-no-files-found: error
+
+  #---------------------------------------------------------------------
+  # 2-build_stratum_deps
+  #---------------------------------------------------------------------
+  build_stratum_deps:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone stratum-deps
+        uses: actions/checkout@v3
+        with:
+          repository: ipdk-io/stratum-deps
+          path: stratum-deps
+
+      - name: Build stratum dependencies
+        working-directory: stratum-deps
+        run: |
+          cmake --version
+          export DEPEND_INSTALL=$GITHUB_WORKSPACE/$DEPS_PREFIX
+          mkdir -pv $DEPEND_INSTALL
+          cmake -B build -DCMAKE_INSTALL_PREFIX=$DEPEND_INSTALL -DGIT_PROGRESS=OFF
+          cmake --build build -j8
+
+      - name: Create stratum-deps tarball
+        run: |
+          tar -czf $DEPS_TARBALL $DEPS_PREFIX
+
+      - name: Upload stratum-deps tarball
+        uses: actions/upload-artifact@v3.1.3
+        with:
+          name: ${{ env.DEPS_ARTIFACT }}
+          path: ${{ env.DEPS_TARBALL }}
+          if-no-files-found: error
+
+  #---------------------------------------------------------------------
+  # 3-build_ovs
+  #---------------------------------------------------------------------
+  build_ovs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone networking-recipe
+        uses: actions/checkout@v3
+        with:
+          repository: ipdk-io/networking-recipe
+          path: recipe
+
+      - name: Initialize ovs submodule
+        working-directory: recipe
+        run: git submodule update --init --checkout --depth 1 ovs
+
+      - name: Build OVS
+        working-directory: recipe
+        run: |
+          export OVS_INSTALL=$GITHUB_WORKSPACE/$OVS_PREFIX
+          mkdir -pv $OVS_INSTALL
+          cmake -S ovs -B $OVS_BUILD -DCMAKE_INSTALL_PREFIX=$OVS_INSTALL -DP4OVS=ON
+          cmake --build $OVS_BUILD -j6 -- V=0
+
+      - name: Create ovs tarball
+        run: tar -czf $OVS_TARBALL $OVS_PREFIX
+
+      - name: Upload ovs tarball
+        uses: actions/upload-artifact@v3.1.3
+        with:
+          name: ${{ env.OVS_ARTIFACT }}
+          path: ${{ env.OVS_TARBALL }}
+          if-no-files-found: error
+
+  #---------------------------------------------------------------------
+  # 4-build_dpdk_p4cp
+  #---------------------------------------------------------------------
+  build_dpdk_p4cp:
+    runs-on: ubuntu-latest
+    needs: [build_dpdk_sde, build_stratum_deps, build_ovs]
+
+    steps:
+      - name: Download dpdk-sde artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ env.SDE_ARTIFACT }}
+
+      - name: Expand dpdk-sde artifact
+        run: |
+          if [-e ${SDE_ARTIFACT}.zip ]; then
+            unzip -o ${SDE_ARTIFACT}.zip
+            rm -f ${SDE_ARTIFACT}.zip
+          fi
+          tar xzf $SDE_TARBALL
+          rm -f $SDE_TARBALL
+          tree -dL 2
+
+      - name: Download stratum-deps artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ env.DEPS_ARTIFACT }}
+
+      - name: Expand stratum-deps artifact
+        run: |
+          if [ -e ${DEPS_ARTIFACT}.zip ]; then
+            unzip -o ${DEPS_ARTIFACT}.zip
+            rm -f ${DEPS_ARTIFACT}.zip
+          fi
+          tar xzf $DEPS_TARBALL
+          rm -f $DEPS_TARBALL
+          tree -dL 2
+
+      - name: Download ovs artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ env.OVS_ARTIFACT }}
+
+      - name: Expand ovs artifact
+        run: |
+          ls -l
+          if [ -e ${OVS_ARTIFACT}.zip ]; then
+            unzip -o ${OVS_ARTIFACT}.zip
+            rm ${OVS_ARTIFACT}.zip
+          fi
+          tar xzf $OVS_TARBALL
+          rm $OVS_TARBALL
+          tree -dL 2
+
+      - name: Clone networking-recipe
+        uses: actions/checkout@v3
+        with:
+          repository: ipdk-io/networking-recipe
+          submodules: recursive
+          path: recipe
+
+      - name: Update submodules (temporary)
+        run: |
+          pushd krnlmon/krnlmon
+          git switch main
+          popd
+          pushd stratum/stratum
+          git switch split-arch
+          popd
+
+      - name: Build P4CP for DPDK
+        working-directory: recipe
+        run: |
+          export DEPEND_INSTALL=$GITHUB_WORKSPACE/$DEPS_PREFIX
+          export OVS_INSTALL=$GITHUB_WORKSPACE/$OVS_PREFIX
+          export SDE_INSTALL=$GITHUB_WORKSPACE/$SDE_PREFIX
+          export P4CP_INSTALL=$GITHUB_WORKSPACE/$P4CP_PREFIX
+          mkdir -pv $P4CP_INSTALL
+          cmake -S . -B build -DCMAKE_INSTALL_PREFIX=$P4CP_INSTALL -DSET_RPATH=ON -DTDI_TARGET=DPDK
+          cmake --build build -j6 --target install
+
+      - name: Create p4cp-dpdk tarball
+        run: tar -czf $P4CP_TARBALL $P4CP_PREFIX
+
+      - name: Upload p4cp-dpdk tarball
+        uses: actions/upload-artifact@v3.1.3
+        with:
+          name: p4cp-dpdk
+          path: ${{ env.P4CP_TARBALL }}
+          if-no-files-found: error
+
+  #---------------------------------------------------------------------
+  # 5-download_ovs
+  #---------------------------------------------------------------------
+  download_ovs:
+    runs-on: ubuntu-latest
+    needs: build_ovs
+
+    steps:
+      - name: Download ovs tarball
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ env.OVS_ARTIFACT }}
+
+      - name: Expand ovs artifact
+        run: |
+          if [ -e ${OVS_ARTIFACT}.zip ]; then
+            unzip -o ${OVS_ARTIFACT}.zip
+            rm -f ${OVS_ARTIFACT}.zip
+          fi
+          tar xzf $OVS_TARBALL
+          rm -f $OVS_TARBALL
+          tree -dL 2
