@@ -211,16 +211,6 @@ jobs:
           submodules: recursive
           path: recipe
 
-      - name: Update submodules (temporary)
-        working-directory: recipe
-        run: |
-          pushd krnlmon/krnlmon
-          git switch main
-          popd
-          pushd stratum/stratum
-          git switch split-arch
-          popd
-
       - name: Build P4CP for DPDK
         working-directory: recipe
         run: |
@@ -257,10 +247,5 @@ jobs:
 
       - name: Expand ovs artifact
         run: |
-          if [ -e ${OVS_ARTIFACT}.zip ]; then
-            unzip -o ${OVS_ARTIFACT}.zip
-            rm -f ${OVS_ARTIFACT}.zip
-          fi
           tar xzf $OVS_TARBALL
           rm -f $OVS_TARBALL
-          tree -dL 2
