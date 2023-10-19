@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: ["main"]
 
-  workflow_dispatch:
+# workflow_dispatch:
 
 concurrency:
   # If workflow for PR or push is already running, stop it and start a new one.
@@ -196,7 +196,6 @@ jobs:
 
       - name: Expand ovs artifact
         run: |
-          ls -l
           if [ -e ${OVS_ARTIFACT}.zip ]; then
             unzip -o ${OVS_ARTIFACT}.zip
             rm ${OVS_ARTIFACT}.zip
@@ -213,6 +212,7 @@ jobs:
           path: recipe
 
       - name: Update submodules (temporary)
+        working-directory: recipe
         run: |
           pushd krnlmon/krnlmon
           git switch main
