@@ -260,6 +260,9 @@ jobs:
       - name: Set DPDK SDE target
         run: |
           export SDE_INSTALL=$GITHUB_WORKSPACE/$SDE_PREFIX
+          echo "PWD=$PWD"
+          ls -l
+          find . -name set-dpdk-sde-target.sh
           ./scripts/dpdk/set-dpdk-sde-target.sh
 
       - name: Patch DPDK SDE RPATHs
