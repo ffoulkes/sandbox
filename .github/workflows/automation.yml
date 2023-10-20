@@ -14,8 +14,11 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  #---------------------------------------------------------------------
+  # Environment variables
+  #---------------------------------------------------------------------
   SDE_PREFIX: p4-dev/dpdk-sde
-  # Full version
+  # Complete SDE
   SDE_FULL_ARTIFACT: dpdk-sde-full
   SDE_FULL_TARBALL: dpdk-sde-full-ubuntu-latest.tar.gz
   # Development version
@@ -273,8 +276,8 @@ jobs:
 
       - name: Unpack sde-dev tarball
         run: |
-          tar xzf $SDE_TARBALL
-          rm -f $SDE_TARBALL
+          tar xzf $SDE_DEV_TARBALL
+          rm -f $SDE_DEV_TARBALL
 
       - name: Download stratum-deps tarball
         uses: actions/download-artifact@v3
