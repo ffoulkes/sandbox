@@ -43,6 +43,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Clone automation repository
+        uses: actions/checkout@v3
+
       - name: Clone p4-dpdk-target
         uses: actions/checkout@v3
         with:
