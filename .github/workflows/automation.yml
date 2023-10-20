@@ -244,7 +244,7 @@ jobs:
     needs: build_dpdk_sde
 
     steps:
-      - name Check out repository
+      - name: Check out repository
         uses: actions/checkout@v3
 
       - name: Download dpdk-sde-full artifact
