@@ -21,9 +21,6 @@ env:
   # Development version
   SDE_DEV_ARTIFACT: dpdk-sde-dev
   SDE_DEV_TARBALL: dpdk-sde-dev-ubuntu-latest.tar.gz
-  # Version to download
-  SDE_ARTIFACT: dpdk-sde-full
-  SDE_TARBALL: dpdk-sde-full-ubuntu-latest.tar.gz
 
   DEPS_PREFIX: p4-dev/x86-deps
   DEPS_ARTIFACT: stratum-deps
@@ -73,14 +70,43 @@ jobs:
           make
           make install
 
-      - name: Create dpdk-sde tarball (full)
+      - name: Create dpdk-sde-full tarball
         run: tar -czf $SDE_FULL_TARBALL $SDE_PREFIX
 
-      - name: Upload dpdk-sde tarball (full)
+      - name: Upload dpdk-sde-full artifact
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.SDE_FULL_ARTIFACT }}
           path: ${{ env.SDE_FULL_TARBALL }}
+          if-no-files-found: error
+
+      - name: Patch SDE
+        run: |
+          export SDE_INSTALL=$GITHUB_WORKSPACE/$SDE_PREFIX
+          ./scripts/dpdk/set-dpdk-sde-target.sh
+          ./scripts/dpdk/patch-dpdk-sde-rpaths.sh
+
+      - name: Prune SDE
+        working-directory: ${{ env.SDE_PREFIX }}
+        run: |
+          rm -fr include/gmock
+          rm -fr include/gtest
+          rm -fr include/python3.10
+          rm -f lib/*.a
+          rm -f lib/*.la
+          rm -fr lib/cmake
+          rm -fr lib/python3.10
+          rm -fr share/dpdk/examples
+          rm -fr share/man
+
+      - name: Create dpdk-sde-dev tarball
+        run: tar -czf $SDE_DEV_TARBALL $SDE_PREFIX
+
+      - name: Upload dpdk-sde-dev artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.SDE_DEV_ARTIFACT }}
+          path: ${{ env.SDE_DEV_TARBALL }}
           if-no-files-found: error
 
   #---------------------------------------------------------------------
@@ -159,32 +185,32 @@ jobs:
     needs: [build_dpdk_sde, build_stratum_deps, build_ovs]
 
     steps:
-      - name: Download dpdk-sde artifact
+      - name: Download dpdk-sde-dev tarball
         uses: actions/download-artifact@v3
         with:
-          name: ${{ env.SDE_ARTIFACT }}
+          name: ${{ env.SDE_DEV_ARTIFACT }}
 
-      - name: Expand dpdk-sde artifact
+      - name: Unpack dpdk-sde-dev tarball
         run: |
-          tar xzf $SDE_TARBALL
-          rm -f $SDE_TARBALL
+          tar xzf $SDE_DEV_TARBALL
+          rm -f $SDE_DEV_TARBALL
 
-      - name: Download stratum-deps artifact
+      - name: Download stratum-deps tarball
         uses: actions/download-artifact@v3
         with:
           name: ${{ env.DEPS_ARTIFACT }}
 
-      - name: Expand stratum-deps artifact
+      - name: Unpack stratum-deps tarball
         run: |
           tar xzf $DEPS_TARBALL
           rm -f $DEPS_TARBALL
 
-      - name: Download ovs artifact
+      - name: Download ovs tarball
         uses: actions/download-artifact@v3
         with:
           name: ${{ env.OVS_ARTIFACT }}
 
-      - name: Expand ovs artifact
+      - name: Unpack ovs tarball
         run: |
           tar xzf $OVS_TARBALL
           rm $OVS_TARBALL
@@ -219,76 +245,48 @@ jobs:
           if-no-files-found: error
 
   #---------------------------------------------------------------------
-  # 5-download_ovs
+  # 5-krnlmon_tests
   #---------------------------------------------------------------------
-  download_ovs:
-    runs-on: ubuntu-latest
-    needs: build_ovs
-
-    steps:
-      - name: Download ovs tarball
-        uses: actions/download-artifact@v3
-        with:
-          name: ${{ env.OVS_ARTIFACT }}
-
-      - name: Expand ovs artifact
-        run: |
-          tar xzf $OVS_TARBALL
-          rm -f $OVS_TARBALL
-
-  #---------------------------------------------------------------------
-  # 6-patch_dpdk_sde
-  #---------------------------------------------------------------------
-  patch_dpdk_sde:
+  krnlmon_tests:
     runs-on: ubuntu-latest
     needs: build_dpdk_sde
 
     steps:
-      - name: Check out repository
+      - name: Clone networking-recipe
         uses: actions/checkout@v3
+        with:
+          repository: ipdk-io/networking-recipe
+          ref: dpdk-pkg-config-path
+          path: recipe
 
-      - name: Download dpdk-sde-full artifact
+      - name: Initialize krnlmon submodule
+        working-directory: recipe
+        run: git submodule update --init --checkout --depth 1 krnlmon
+
+      - name: Download sde-dev tarball
         uses: actions/download-artifact@v3
         with:
-          name: ${{ env.SDE_ARTIFACT }}
+          name: ${{ env.SDE_DEV_ARTIFACT }}
 
-      - name: Expand dpdk-sde-full artifact
+      - name: Unpack sde-dev tarball
         run: |
           tar xzf $SDE_TARBALL
           rm -f $SDE_TARBALL
 
-      - name: Install patchelf
-        run: sudo apt install patchelf
-
-      - name: Set DPDK SDE target
-        run: |
-          export SDE_INSTALL=$GITHUB_WORKSPACE/$SDE_PREFIX
-          ./scripts/dpdk/set-dpdk-sde-target.sh
-
-      - name: Patch DPDK SDE RPATHs
-        run: |
-          export SDE_INSTALL=$GITHUB_WORKSPACE/$SDE_PREFIX
-          ./scripts/dpdk/patch-dpdk-sde-rpaths.sh
-
-      - name: Prune DPDK SDE
-        working-directory: ${{ env.SDE_PREFIX }}
-        run: |
-          rm -fr include/gmock
-          rm -fr include/gtest
-          rm -fr include/python3.10
-          rm -f lib/*.a
-          rm -f lib/*.la
-          rm -fr lib/cmake
-          rm -fr lib/python3.10
-          rm -fr share/dpdk/examples
-          rm -fr share/man
-
-      - name: Create dpdk-sde-dev tarball
-        run: tar -czf $SDE_DEV_TARBALL $SDE_PREFIX
-
-      - name: Upload dpdk-sde-dev tarball
-        uses: actions/upload-artifact@v3
+      - name: Download stratum-deps tarball
+        uses: actions/download-artifact@v3
         with:
-          name: ${{ env.SDE_DEV_ARTIFACT }}
-          path: ${{ env.SDE_DEV_TARBALL }}
-          if-no-files-found: error
+          name: ${{ env.DEPS_ARTIFACT }}
+
+      - name: Unpack stratum-deps tarball
+        run: |
+          tar xzf $DEPS_TARBALL
+          rm -f $DEPS_TARBALL
+
+      - name: Run unit tests
+        working-directory: recipe
+        run: |
+          export DEPEND_INSTALL=$GITHUB_WORKSPACE/$DEPS_PREFIX
+          export SDE_INSTALL=$GITHUB_WORKSPACE/$SDE_PREFIX
+          cmake -S . -B build -DTDI_TARGET=DPDK -DWITH_OVSP4RT=OFF
+          cmake --build build --target krnlmon-test
