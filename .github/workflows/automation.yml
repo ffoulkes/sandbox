@@ -166,13 +166,8 @@ jobs:
 
       - name: Expand dpdk-sde artifact
         run: |
-          if [-e ${SDE_ARTIFACT}.zip ]; then
-            unzip -o ${SDE_ARTIFACT}.zip
-            rm -f ${SDE_ARTIFACT}.zip
-          fi
           tar xzf $SDE_TARBALL
           rm -f $SDE_TARBALL
-          tree -dL 2
 
       - name: Download stratum-deps artifact
         uses: actions/download-artifact@v3
@@ -181,13 +176,8 @@ jobs:
 
       - name: Expand stratum-deps artifact
         run: |
-          if [ -e ${DEPS_ARTIFACT}.zip ]; then
-            unzip -o ${DEPS_ARTIFACT}.zip
-            rm -f ${DEPS_ARTIFACT}.zip
-          fi
           tar xzf $DEPS_TARBALL
           rm -f $DEPS_TARBALL
-          tree -dL 2
 
       - name: Download ovs artifact
         uses: actions/download-artifact@v3
@@ -196,13 +186,8 @@ jobs:
 
       - name: Expand ovs artifact
         run: |
-          if [ -e ${OVS_ARTIFACT}.zip ]; then
-            unzip -o ${OVS_ARTIFACT}.zip
-            rm ${OVS_ARTIFACT}.zip
-          fi
           tar xzf $OVS_TARBALL
           rm $OVS_TARBALL
-          tree -dL 2
 
       - name: Clone networking-recipe
         uses: actions/checkout@v3
