@@ -208,12 +208,9 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: ipdk-io/networking-recipe
+          ref: dpdk-pkg-config-path
           submodules: recursive
           path: recipe
-
-      - name: Use updated FindDpdkDriver module
-        working-directory: recipe
-        run: git switch dpdk-pkg-config-path
 
       - name: Build P4CP for DPDK
         working-directory: recipe
