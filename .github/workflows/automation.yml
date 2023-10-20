@@ -244,6 +244,9 @@ jobs:
     needs: build_dpdk_sde
 
     steps:
+      - name Check out repository
+        uses: actions/checkout@v3
+
       - name: Download dpdk-sde-full artifact
         uses: actions/download-artifact@v3
         with:
@@ -260,9 +263,6 @@ jobs:
       - name: Set DPDK SDE target
         run: |
           export SDE_INSTALL=$GITHUB_WORKSPACE/$SDE_PREFIX
-          echo "PWD=$PWD"
-          ls -l
-          find . -name set-dpdk-sde-target.sh
           ./scripts/dpdk/set-dpdk-sde-target.sh
 
       - name: Patch DPDK SDE RPATHs
