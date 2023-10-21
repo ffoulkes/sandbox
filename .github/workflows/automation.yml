@@ -163,7 +163,7 @@ jobs:
   #---------------------------------------------------------------------
   krnlmon_tests:
     runs-on: ubuntu-20.04
-    needs: [build_dpdk_sde, build_stratum_deps]
+    needs: build_stratum_deps
 
     steps:
       - name: Clone networking-recipe
