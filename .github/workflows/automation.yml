@@ -17,10 +17,6 @@ env:
   #---------------------------------------------------------------------
   # Environment variables
   #---------------------------------------------------------------------
-  SDE_PREFIX: p4-dev/dpdk-sde
-  SDE_DEV_ARTIFACT: dpdk-sde-dev
-  SDE_DEV_TARBALL: dpdk-sde-dev-ubuntu-20.04.tar.gz
-
   DEPS_PREFIX: p4-dev/x86-deps
   DEPS_ARTIFACT: stratum-deps
   DEPS_TARBALL: deps-ubuntu-20.04.tar.gz
@@ -35,72 +31,6 @@ env:
   PREREQS: libbsd-dev libnl-3-dev libnl-route-3-dev libnl-genl-3-dev
 
 jobs:
-  #---------------------------------------------------------------------
-  # 1-build_dpdk_sde
-  #---------------------------------------------------------------------
-  build_dpdk_sde:
-    runs-on: ubuntu-20.04
-
-    steps:
-      - name: Clone automation repository
-        uses: actions/checkout@v3
-
-      - name: Clone p4-dpdk-target
-        uses: actions/checkout@v3
-        with:
-          repository: p4lang/p4-dpdk-target
-          submodules: recursive
-          path: dpdk-target
-
-      - name: Install dpdk-sde dependencies
-        working-directory: dpdk-target/tools/setup
-        run: |
-          sudo apt update -y
-          # Might be able to pare this down, based on the known manifest
-          # of the Ubuntu 22.04 runner and the fact that we building
-          # the SDE, not running it.
-          python install_dep.py
-
-      - name: Build p4-dpdk-target
-        working-directory: dpdk-target
-        run: |
-          export SDE=$(realpath .)
-          export SDE_INSTALL=$GITHUB_WORKSPACE/$SDE_PREFIX
-          mkdir -pv $SDE_INSTALL
-          ./autogen.sh
-          ./configure --prefix=$SDE_INSTALL
-          make -j6
-          make install
-
-      - name: Patch SDE
-        run: |
-          export SDE_INSTALL=$GITHUB_WORKSPACE/$SDE_PREFIX
-          ./scripts/dpdk/set-dpdk-sde-target.sh
-          ./scripts/dpdk/patch-dpdk-sde-rpaths.sh
-
-      - name: Prune SDE
-        working-directory: ${{ env.SDE_PREFIX }}
-        run: |
-          rm -fr include/gmock
-          rm -fr include/gtest
-          rm -fr include/python3.10
-          rm -f lib/*.a
-          rm -f lib/*.la
-          rm -fr lib/cmake
-          rm -fr lib/python3.10
-          rm -fr share/dpdk/examples
-          rm -fr share/man
-
-      - name: Create dpdk-sde-dev tarball
-        run: tar -czf $SDE_DEV_TARBALL $SDE_PREFIX
-
-      - name: Upload dpdk-sde-dev tarball
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ env.SDE_DEV_ARTIFACT }}
-          path: ${{ env.SDE_DEV_TARBALL }}
-          if-no-files-found: error
-
   #---------------------------------------------------------------------
   # 2-build_stratum_deps
   #---------------------------------------------------------------------
@@ -174,18 +104,16 @@ jobs:
   #---------------------------------------------------------------------
   build_dpdk_p4cp:
     runs-on: ubuntu-20.04
-    needs: [build_dpdk_sde, build_stratum_deps, build_ovs]
+    needs: [build_stratum_deps, build_ovs]
 
     steps:
-      - name: Download dpdk-sde-dev tarball
-        uses: actions/download-artifact@v3
+      - name: Download dpdk-sde-dev
+        uses: robinraju/release-downloader@v1.8
         with:
-          name: ${{ env.SDE_DEV_ARTIFACT }}
-
-      - name: Unpack dpdk-sde-dev tarball
-        run: |
-          tar xzf $SDE_DEV_TARBALL
-          rm -f $SDE_DEV_TARBALL
+          repository: ffoulkes/p4-dev.dpdk-sde
+          tag: 2023.10.1
+          fileName: dpdk-sde-dev-ubuntu-20.04.tar.gz
+          extract: true
 
       - name: Download stratum-deps tarball
         uses: actions/download-artifact@v3
@@ -248,16 +176,14 @@ jobs:
       - name: Initialize krnlmon submodule
         working-directory: recipe
         run: git submodule update --init --checkout --depth 1 krnlmon
-
-      - name: Download sde-dev tarball
-        uses: actions/download-artifact@v3
+        
+      - name: Download dpdk-sde-dev
+        uses: robinraju/release-downloader@v1.8
         with:
-          name: ${{ env.SDE_DEV_ARTIFACT }}
-
-      - name: Unpack sde-dev tarball
-        run: |
-          tar xzf $SDE_DEV_TARBALL
-          rm -f $SDE_DEV_TARBALL
+          repository: ffoulkes/p4-dev.dpdk-sde
+          tag: 2023.10.1
+          fileName: dpdk-sde-dev-ubuntu-20.04.tar.gz
+          extract: true
 
       - name: Download stratum-deps tarball
         uses: actions/download-artifact@v3
