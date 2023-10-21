@@ -56,10 +56,11 @@ jobs:
           fileName: ${{ env.SDE_FILENAME }}
           extract: true
 
-      - name: Check folder
+      - name: Remove tarball
         run: |
-          ls -l p4-dev/
-          ls -l $SDE_INSTALL
+          ls -l
+          rm ${{ env.SDE_FILENAME }}
+          ls -l
 
   #---------------------------------------------------------------------
   # 2-build_stratum_deps
