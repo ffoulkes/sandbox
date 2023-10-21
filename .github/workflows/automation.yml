@@ -36,33 +36,6 @@ env:
 
 jobs:
   #---------------------------------------------------------------------
-  # 1-download_dpdk_sde
-  #---------------------------------------------------------------------
-  download_dpdk_sde:
-    runs-on: ubuntu-20.04
-
-    steps:
-      - name: Clone own repository
-        uses: actions/checkout@v3
-
-      - name: Check repository
-        run: ls -l
-
-      - name: Download dpdk-sde-dev
-        uses: robinraju/release-downloader@v1.8
-        with:
-          repository: ffoulkes/p4-dev.dpdk-sde
-          tag: ${{ env.SDE_TAG }}
-          fileName: ${{ env.SDE_FILENAME }}
-          extract: true
-
-      - name: Remove tarball
-        run: |
-          ls -l
-          rm ${{ env.SDE_FILENAME }}
-          ls -l
-
-  #---------------------------------------------------------------------
   # 2-build_stratum_deps
   #---------------------------------------------------------------------
   build_stratum_deps:
@@ -146,6 +119,10 @@ jobs:
           fileName: ${{ env.SDE_FILENAME }}
           extract: true
 
+      - name: Remove tarball
+        run: |
+          rm ${{ env.SDE_FILENAME }}
+
       - name: Download stratum-deps tarball
         uses: actions/download-artifact@v3
         with:
@@ -215,6 +192,10 @@ jobs:
           tag: ${{ env.SDE_TAG }}
           fileName: ${{ env.SDE_FILENAME }}
           extract: true
+
+      - name: Remove tarball
+        run: |
+          rm ${{ env.SDE_FILENAME }}
 
       - name: Download stratum-deps tarball
         uses: actions/download-artifact@v3
