@@ -19,6 +19,7 @@ env:
   #---------------------------------------------------------------------
   SDE_TAG: 2023.10.1
   SDE_FILENAME: dpdk-sde-dev-ubuntu-20.04.tar.gz
+  SDE_PREFIX: p4-dev/dpdk-sde
 
   DEPS_PREFIX: p4-dev/x86-deps
   DEPS_ARTIFACT: stratum-deps
@@ -56,7 +57,9 @@ jobs:
           extract: true
 
       - name: Check folder
-        run: ls -l
+        run: |
+          ls -l p4-dev/
+          ls -l $SDE_INSTALL
 
   #---------------------------------------------------------------------
   # 2-build_stratum_deps
