@@ -18,10 +18,6 @@ env:
   # Environment variables
   #---------------------------------------------------------------------
   SDE_PREFIX: p4-dev/dpdk-sde
-  # Complete SDE
-# SDE_FULL_ARTIFACT: dpdk-sde-full
-# SDE_FULL_TARBALL: dpdk-sde-full-ubuntu-20.04.tar.gz
-  # Development version
   SDE_DEV_ARTIFACT: dpdk-sde-dev
   SDE_DEV_TARBALL: dpdk-sde-dev-ubuntu-20.04.tar.gz
 
@@ -35,8 +31,6 @@ env:
   OVS_TARBALL: ovs-ubuntu-20.04.tar.gz
 
   P4CP_PREFIX: p4-dev/p4cp-dpdk
-  P4CP_ARTIFACT: p4cp-dpdk
-  P4CP_TARBALL: p4cp-dpdk-ubuntu-20.04.tar.gz
 
   PREREQS: libbsd-dev libnl-3-dev libnl-route-3-dev libnl-genl-3-dev
 
@@ -75,18 +69,8 @@ jobs:
           mkdir -pv $SDE_INSTALL
           ./autogen.sh
           ./configure --prefix=$SDE_INSTALL
-          make
+          make -j6
           make install
-
-#     - name: Create dpdk-sde-full tarball
-#       run: tar -czf $SDE_FULL_TARBALL $SDE_PREFIX
-#
-#     - name: Upload dpdk-sde-full artifact
-#       uses: actions/upload-artifact@v3
-#       with:
-#         name: ${{ env.SDE_FULL_ARTIFACT }}
-#         path: ${{ env.SDE_FULL_TARBALL }}
-#         if-no-files-found: error
 
       - name: Patch SDE
         run: |
@@ -137,7 +121,7 @@ jobs:
           export DEPEND_INSTALL=$GITHUB_WORKSPACE/$DEPS_PREFIX
           mkdir -pv $DEPEND_INSTALL
           cmake -B build -DCMAKE_INSTALL_PREFIX=$DEPEND_INSTALL -DGIT_PROGRESS=OFF
-          cmake --build build -j8
+          cmake --build build -j6
 
       - name: Create stratum-deps tarball
         run: |
@@ -245,16 +229,6 @@ jobs:
           mkdir -pv $P4CP_INSTALL
           cmake -S . -B build -DCMAKE_INSTALL_PREFIX=$P4CP_INSTALL -DSET_RPATH=ON -DTDI_TARGET=DPDK
           cmake --build build -j6 --target install
-
-      - name: Create p4cp-dpdk tarball
-        run: tar -czf $P4CP_TARBALL $P4CP_PREFIX
-
-      - name: Upload p4cp-dpdk tarball
-        uses: actions/upload-artifact@v3.1.3
-        with:
-          name: p4cp-dpdk
-          path: ${{ env.P4CP_TARBALL }}
-          if-no-files-found: error
 
   #---------------------------------------------------------------------
   # 5-krnlmon_tests
