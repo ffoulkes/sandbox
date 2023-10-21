@@ -38,7 +38,7 @@ env:
   P4CP_ARTIFACT: p4cp-dpdk
   P4CP_TARBALL: p4cp-dpdk-ubuntu-20.04.tar.gz
 
-  APT_REQS: libbsd-dev libnl-3-dev libnl-route-3-dev libnl-genl-3-dev
+  PREREQS: libbsd-dev libnl-3-dev libnl-route-3-dev libnl-genl-3-dev
 
 jobs:
   #---------------------------------------------------------------------
@@ -233,7 +233,7 @@ jobs:
 
       - name: Install prerequisites
         run: |
-          sudo apt install $APT_REQS
+          sudo apt install $PREREQS
 
       - name: Build P4CP for DPDK
         working-directory: recipe
@@ -275,6 +275,10 @@ jobs:
         working-directory: recipe
         run: git submodule update --init --checkout --depth 1 krnlmon
 
+      - name: Override krnlmon branch
+        working-directory: recipe/krnlmon/krnlmon
+        run: git switch module-path
+
       - name: Download sde-dev tarball
         uses: actions/download-artifact@v3
         with:
@@ -297,12 +301,19 @@ jobs:
 
       - name: Install prerequisites
         run: |
-          sudo apt install $APT_REQS
+          sudo apt install $PREREQS
+
+      - name: Copy cmake modules to krnlmon
+        working-directory: recipe
+        run: |
+          cp -v cmake/SelectTdiTarget.cmake krnlmon/krnlmon/cmake
+          cp -v cmake/CompilerSettings.cmake krnlmon/krnlmon/cmake
+          cp -v cmake/FindDpdkDriver.cmake krnlmon/krnlmon/cmake
 
       - name: Run unit tests
-        working-directory: recipe
+        working-directory: recipe/krnlmon/krnlmon
         run: |
           export DEPEND_INSTALL=$GITHUB_WORKSPACE/$DEPS_PREFIX
           export SDE_INSTALL=$GITHUB_WORKSPACE/$SDE_PREFIX
-          cmake -S . -B build -DTDI_TARGET=DPDK -DWITH_OVSP4RT=OFF
+          cmake -S . -B build -DTDI_TARGET=DPDK
           cmake --build build --target krnlmon-test
