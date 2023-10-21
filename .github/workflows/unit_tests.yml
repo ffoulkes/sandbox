@@ -2,7 +2,9 @@ name: "Kernel monitor unit test"
 
 on:
   workflow_dispatch:
-
+env:
+  PREREQS: libbsd-dev libnl-3-dev libnl-route-3-dev libnl-genl-3-dev
+  
 jobs:
   unit_tests:
     runs-on: ubuntu-20.04
@@ -30,6 +32,6 @@ jobs:
               -DDEPEND_INSTALL_DIR=/dev/null \
               -DSDE_INSTALL_DIR=/dev/null \
               -DSAI_SOURCE_DIR=$(realpath ../SAI) \
-              -DCMAKE_MODULE_PATH=$(relapath ../../cmake) \
+              -DCMAKE_MODULE_PATH=$(realpath ../../cmake) \
               -DTDI_TARGET=DPDK
           cmake --build build --target krnlmon-test
