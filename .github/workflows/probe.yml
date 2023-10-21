@@ -1,0 +1,17 @@
+name: "Who's on first"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  find_libbsd:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Look before you leap
+        run: whereis libbsd
+
+      - name: Once more unto the breach
+        run: |
+          sudo apt install libbsd-dev
+          whereis libbsd
