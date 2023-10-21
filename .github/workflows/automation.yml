@@ -38,6 +38,8 @@ env:
   P4CP_ARTIFACT: p4cp-dpdk
   P4CP_TARBALL: p4cp-dpdk-ubuntu-20.04.tar.gz
 
+  APT_REQS: libbsd-dev libnl-3-dev libnl-route-3-dev libnl-genl-3-dev
+
 jobs:
   #---------------------------------------------------------------------
   # 1-build_dpdk_sde
@@ -231,7 +233,7 @@ jobs:
 
       - name: Install prerequisites
         run: |
-          sudo apt install libbsd-dev
+          sudo apt install $APT_REQS
 
       - name: Build P4CP for DPDK
         working-directory: recipe
@@ -295,7 +297,7 @@ jobs:
 
       - name: Install prerequisites
         run: |
-          sudo apt install libbsd-dev
+          sudo apt install $APT_REQS
 
       - name: Run unit tests
         working-directory: recipe
