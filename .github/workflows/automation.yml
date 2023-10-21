@@ -19,8 +19,8 @@ env:
   #---------------------------------------------------------------------
   SDE_PREFIX: p4-dev/dpdk-sde
   # Complete SDE
-  SDE_FULL_ARTIFACT: dpdk-sde-full
-  SDE_FULL_TARBALL: dpdk-sde-full-ubuntu-20.04.tar.gz
+# SDE_FULL_ARTIFACT: dpdk-sde-full
+# SDE_FULL_TARBALL: dpdk-sde-full-ubuntu-20.04.tar.gz
   # Development version
   SDE_DEV_ARTIFACT: dpdk-sde-dev
   SDE_DEV_TARBALL: dpdk-sde-dev-ubuntu-20.04.tar.gz
@@ -78,15 +78,15 @@ jobs:
           make
           make install
 
-      - name: Create dpdk-sde-full tarball
-        run: tar -czf $SDE_FULL_TARBALL $SDE_PREFIX
-
-      - name: Upload dpdk-sde-full artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ env.SDE_FULL_ARTIFACT }}
-          path: ${{ env.SDE_FULL_TARBALL }}
-          if-no-files-found: error
+#     - name: Create dpdk-sde-full tarball
+#       run: tar -czf $SDE_FULL_TARBALL $SDE_PREFIX
+#
+#     - name: Upload dpdk-sde-full artifact
+#       uses: actions/upload-artifact@v3
+#       with:
+#         name: ${{ env.SDE_FULL_ARTIFACT }}
+#         path: ${{ env.SDE_FULL_TARBALL }}
+#         if-no-files-found: error
 
       - name: Patch SDE
         run: |
@@ -110,7 +110,7 @@ jobs:
       - name: Create dpdk-sde-dev tarball
         run: tar -czf $SDE_DEV_TARBALL $SDE_PREFIX
 
-      - name: Upload dpdk-sde-dev artifact
+      - name: Upload dpdk-sde-dev tarball
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.SDE_DEV_ARTIFACT }}
@@ -298,13 +298,6 @@ jobs:
       - name: Install prerequisites
         run: |
           sudo apt install $PREREQS
-
-      - name: Copy cmake modules to krnlmon
-        working-directory: recipe
-        run: |
-          cp -v cmake/SelectTdiTarget.cmake krnlmon/krnlmon/cmake
-          cp -v cmake/CompilerSettings.cmake krnlmon/krnlmon/cmake
-          cp -v cmake/FindDpdkDriver.cmake krnlmon/krnlmon/cmake
 
       - name: Run unit tests
         working-directory: recipe/krnlmon/krnlmon
