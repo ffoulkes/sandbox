@@ -17,6 +17,9 @@ env:
   #---------------------------------------------------------------------
   # Environment variables
   #---------------------------------------------------------------------
+  SDE_TAG: 2023.10.1
+  SDE_FILENAME: dpdk-sde-dev-ubuntu-20.04.tar.gz
+
   DEPS_PREFIX: p4-dev/x86-deps
   DEPS_ARTIFACT: stratum-deps
   DEPS_TARBALL: deps-ubuntu-20.04.tar.gz
@@ -31,6 +34,36 @@ env:
   PREREQS: libbsd-dev libnl-3-dev libnl-route-3-dev libnl-genl-3-dev
 
 jobs:
+  #---------------------------------------------------------------------
+  # 1-download_dpdk_sde
+  #---------------------------------------------------------------------
+  download_dpdk_sde:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Clone own repository
+        uses: actions/checkout@v3
+
+      - name: Check repository
+        run: ls -l
+
+      - name: Check workspace
+        working-directory: $GITHUB_WORKSPACE
+        run: ls -l
+
+      - name: Download dpdk-sde-dev
+        uses: robinraju/release-downloader@v1.8
+        with:
+          repository: ffoulkes/p4-dev.dpdk-sde
+          tag: ${{ env.SDE_TAG }}
+          fileName: ${{ env.SDE_FILENAME }}
+          extract: true
+
+      - name: Check folder
+        run: |
+          ls -l $GITHUB_WORKSPACE
+          ls -l
+
   #---------------------------------------------------------------------
   # 2-build_stratum_deps
   #---------------------------------------------------------------------
@@ -111,8 +144,8 @@ jobs:
         uses: robinraju/release-downloader@v1.8
         with:
           repository: ffoulkes/p4-dev.dpdk-sde
-          tag: 2023.10.1
-          fileName: dpdk-sde-dev-ubuntu-20.04.tar.gz
+          tag: ${{ env.SDE_TAG }}
+          fileName: ${{ env.SDE_FILENAME }}
           extract: true
 
       - name: Download stratum-deps tarball
@@ -181,8 +214,8 @@ jobs:
         uses: robinraju/release-downloader@v1.8
         with:
           repository: ffoulkes/p4-dev.dpdk-sde
-          tag: 2023.10.1
-          fileName: dpdk-sde-dev-ubuntu-20.04.tar.gz
+          tag: ${{ env.SDE_TAG }}
+          fileName: ${{ env.SDE_FILENAME }}
           extract: true
 
       - name: Download stratum-deps tarball
