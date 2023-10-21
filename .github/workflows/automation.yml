@@ -275,10 +275,6 @@ jobs:
         working-directory: recipe
         run: git submodule update --init --checkout --depth 1 krnlmon
 
-      - name: Override krnlmon branch
-        working-directory: recipe/krnlmon/krnlmon
-        run: git switch module-path
-
       - name: Download sde-dev tarball
         uses: actions/download-artifact@v3
         with:
