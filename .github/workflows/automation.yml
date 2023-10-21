@@ -20,30 +20,30 @@ env:
   SDE_PREFIX: p4-dev/dpdk-sde
   # Complete SDE
   SDE_FULL_ARTIFACT: dpdk-sde-full
-  SDE_FULL_TARBALL: dpdk-sde-full-ubuntu-latest.tar.gz
+  SDE_FULL_TARBALL: dpdk-sde-full-ubuntu-20.04.tar.gz
   # Development version
   SDE_DEV_ARTIFACT: dpdk-sde-dev
-  SDE_DEV_TARBALL: dpdk-sde-dev-ubuntu-latest.tar.gz
+  SDE_DEV_TARBALL: dpdk-sde-dev-ubuntu-20.04.tar.gz
 
   DEPS_PREFIX: p4-dev/x86-deps
   DEPS_ARTIFACT: stratum-deps
-  DEPS_TARBALL: deps-ubuntu-latest.tar.gz
+  DEPS_TARBALL: deps-ubuntu-20.04.tar.gz
 
   OVS_BUILD: ovs/build
   OVS_PREFIX: p4-dev/ovs
   OVS_ARTIFACT: p4cp-ovs
-  OVS_TARBALL: ovs-ubuntu-latest.tar.gz
+  OVS_TARBALL: ovs-ubuntu-20.04.tar.gz
 
   P4CP_PREFIX: p4-dev/p4cp-dpdk
   P4CP_ARTIFACT: p4cp-dpdk
-  P4CP_TARBALL: p4cp-dpdk-ubuntu-latest.tar.gz
+  P4CP_TARBALL: p4cp-dpdk-ubuntu-20.04.tar.gz
 
 jobs:
   #---------------------------------------------------------------------
   # 1-build_dpdk_sde
   #---------------------------------------------------------------------
   build_dpdk_sde:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
       - name: Clone automation repository
@@ -119,7 +119,7 @@ jobs:
   # 2-build_stratum_deps
   #---------------------------------------------------------------------
   build_stratum_deps:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
       - name: Clone stratum-deps
@@ -152,7 +152,7 @@ jobs:
   # 3-build_ovs
   #---------------------------------------------------------------------
   build_ovs:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
       - name: Clone networking-recipe
@@ -187,7 +187,7 @@ jobs:
   # 4-build_dpdk_p4cp
   #---------------------------------------------------------------------
   build_dpdk_p4cp:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [build_dpdk_sde, build_stratum_deps, build_ovs]
 
     steps:
@@ -254,7 +254,7 @@ jobs:
   # 5-krnlmon_tests
   #---------------------------------------------------------------------
   krnlmon_tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [build_dpdk_sde, build_stratum_deps]
 
     steps:
