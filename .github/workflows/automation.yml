@@ -27,97 +27,16 @@ env:
   DEPS_FILENAME: deps-ubuntu-latest-x86_64.tar.gz
   DEPS_INSTALL_DIR: /opt/p4dev/x86deps
 
-  OVS_BUILD: ovs/build
-  OVS_PREFIX: p4-dev/ovs
-  OVS_ARTIFACT: p4cp-ovs
-  OVS_TARBALL: ovs-ubuntu-latest.tar.gz
-
-  P4CP_PREFIX: p4-dev/p4cp-dpdk
-
   PREREQS: libbsd-dev libnl-3-dev libnl-route-3-dev libnl-genl-3-dev
 
 jobs:
   #---------------------------------------------------------------------
-  # 1-build_ovs
-  #---------------------------------------------------------------------
-  build_ovs:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Clone networking-recipe
-        uses: actions/checkout@v3
-        with:
-          repository: ipdk-io/networking-recipe
-          path: recipe
-
-      - name: Initialize ovs submodule
-        working-directory: recipe
-        run: git submodule update --init --checkout --depth 1 ovs
-
-      - name: Build OVS
-        working-directory: recipe
-        run: |
-          export OVS_INSTALL=$GITHUB_WORKSPACE/$OVS_PREFIX
-          mkdir -pv $OVS_INSTALL
-          cmake -S ovs -B $OVS_BUILD -DCMAKE_INSTALL_PREFIX=$OVS_INSTALL -DP4OVS=ON
-          cmake --build $OVS_BUILD -j6 -- V=0
-
-      - name: Create ovs tarball
-        run: tar -czf $OVS_TARBALL $OVS_PREFIX
-
-      - name: Upload ovs tarball
-        uses: actions/upload-artifact@v3.1.3
-        with:
-          name: ${{ env.OVS_ARTIFACT }}
-          path: ${{ env.OVS_TARBALL }}
-          if-no-files-found: error
-
-  #---------------------------------------------------------------------
-  # 2-build_dpdk_p4cp
+  # 1-build_dpdk_p4cp
   #---------------------------------------------------------------------
   build_dpdk_p4cp:
     runs-on: ubuntu-latest
-    needs: build_ovs
 
     steps:
-      # ----- dpdk-sde-dev release -----
-      - name: Download dpdk-sde-dev
-        uses: robinraju/release-downloader@v1.8
-        with:
-          repository: ${{ env.SDE_REPOSITORY }}
-          tag: ${{ env.SDE_TAG }}
-          fileName: ${{ env.SDE_FILENAME }}
-
-      - name: Install ${{ env.SDE_INSTALL_DIR }}
-        run: |
-          sudo tar -xzf $SDE_FILENAME -C /
-          rm $SDE_FILENAME
-
-      # ----- stratum-deps release -----
-      - name: Download stratum-deps
-        uses: robinraju/release-downloader@v1.8
-        with:
-          repository: ${{ env.DEPS_REPOSITORY }}
-          tag: ${{ env.DEPS_TAG }}
-          fileName: ${{ env.DEPS_FILENAME }}
-
-      - name: Install ${{ env.DEPS_INSTALL_DIR }}
-        run: |
-          sudo tar -xzf $DEPS_FILENAME -C /
-          rm $DEPS_FILENAME
-
-      # ----- ovs artifact -----
-      - name: Download ovs tarball
-        uses: actions/download-artifact@v3
-        with:
-          name: ${{ env.OVS_ARTIFACT }}
-
-      - name: Unpack ovs tarball
-        run: |
-          tar xzf $OVS_TARBALL
-          rm $OVS_TARBALL
-
-      # ----- networking-recipe -----
       - name: Clone networking-recipe
         uses: actions/checkout@v3
         with:
@@ -130,19 +49,37 @@ jobs:
         run: |
           sudo apt install $PREREQS
 
-      - name: Build P4CP for DPDK
+      - name: Install ${{ env.SDE_INSTALL_DIR }}
+        uses: robinraju/release-downloader@v1.8
+        with:
+          repository: ${{ env.SDE_REPOSITORY }}
+          tag: ${{ env.SDE_TAG }}
+          fileName: ${{ env.SDE_FILENAME }}
+
+      - run: |
+          sudo tar -xzf $SDE_FILENAME -C /
+          rm $SDE_FILENAME
+
+      - name: Install ${{ env.DEPS_INSTALL_DIR }}
+        uses: robinraju/release-downloader@v1.8
+        with:
+          repository: ${{ env.DEPS_REPOSITORY }}
+          tag: ${{ env.DEPS_TAG }}
+          fileName: ${{ env.DEPS_FILENAME }}
+
+      - run: |
+          sudo tar -xzf $DEPS_FILENAME -C /
+          rm $DEPS_FILENAME
+
+      - name: Build networking-recipe
         working-directory: recipe
         run: |
           export DEPEND_INSTALL=$DEPS_INSTALL_DIR
-          export OVS_INSTALL=$GITHUB_WORKSPACE/$OVS_PREFIX
           export SDE_INSTALL=$SDE_INSTALL_DIR
-          export P4CP_INSTALL=$GITHUB_WORKSPACE/$P4CP_PREFIX
-          mkdir -pv $P4CP_INSTALL
-          cmake -S . -B build -DCMAKE_INSTALL_PREFIX=$P4CP_INSTALL -DSET_RPATH=ON -DTDI_TARGET=DPDK
-          cmake --build build -j6 --target install
+          ./make-all.sh --target=dpdk --prath
 
   #---------------------------------------------------------------------
-  # 3-krnlmon_tests
+  # 2-krnlmon_tests
   #---------------------------------------------------------------------
   krnlmon_tests:
     runs-on: ubuntu-latest
@@ -158,36 +95,32 @@ jobs:
       - name: Initialize krnlmon submodule
         working-directory: recipe
         run: git submodule update --init --checkout --depth 1 krnlmon
+
+      - name: Install prerequisites
+        run: |
+          sudo apt install $PREREQS
         
-      # ----- dpdk-sde-dev -----        
-      - name: Download dpdk-sde-dev
+      - name: Install ${{ env.SDE_INSTALL_DIR }}
         uses: robinraju/release-downloader@v1.8
         with:
           repository: ${{ env.SDE_REPOSITORY }}
           tag: ${{ env.SDE_TAG }}
           fileName: ${{ env.SDE_FILENAME }}
 
-      - name: Install ${{ env.SDE_INSTALL_DIR }}
-        run: |
+      - run: |
           sudo tar -xzf $SDE_FILENAME -C /
           rm $SDE_FILENAME
 
-      # ----- stratum-deps -----
-      - name: Download stratum-deps
+      - name: Install ${{ env.DEPS_INSTALL_DIR }}
         uses: robinraju/release-downloader@v1.8
         with:
           repository: ${{ env.DEPS_REPOSITORY }}
           tag: ${{ env.DEPS_TAG }}
           fileName: ${{ env.DEPS_FILENAME }}
 
-      - name: Install ${{ env.DEPS_INSTALL_DIR }}
-        run: |
+      - run: |
           sudo tar -xzf $DEPS_FILENAME -C /
           rm $DEPS_FILENAME
-
-      - name: Install prerequisites
-        run: |
-          sudo apt install $PREREQS
 
       - name: Run unit tests
         working-directory: recipe/krnlmon/krnlmon
