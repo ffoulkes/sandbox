@@ -90,8 +90,7 @@ jobs:
 
       - name: Install ${{ env.SDE_INSTALL_DIR }}
         run: |
-          sudo mkdir -pv --mode=go+w $SDE_INSTALL_DIR
-          tar -xzf $SDE_FILENAME -C /
+          sudo tar -xzf $SDE_FILENAME -C /
           rm $SDE_FILENAME
 
       # ----- stratum-deps release -----
@@ -104,8 +103,7 @@ jobs:
 
       - name: Install ${{ env.DEPS_INSTALL_DIR }}
         run: |
-          sudo mkdir -pv --mode=go+w $DEPS_INSTALL_DIR
-          tar -xzf $DEPS_FILENAME -C /
+          sudo tar -xzf $DEPS_FILENAME -C /
           rm $DEPS_FILENAME
 
       # ----- ovs artifact -----
@@ -171,8 +169,7 @@ jobs:
 
       - name: Install ${{ env.SDE_INSTALL_DIR }}
         run: |
-          sudo mkdir -pv --mode=go+w $SDE_INSTALL_DIR
-          tar -xzf $SDE_FILENAME /
+          sudo tar -xzf $SDE_FILENAME -C /
           rm $SDE_FILENAME
 
       # ----- stratum-deps -----
@@ -185,8 +182,7 @@ jobs:
 
       - name: Install ${{ env.DEPS_INSTALL_DIR }}
         run: |
-          sudo mkdir -pv --mode=go+w $DEPS_INSTALL_DIR
-          tar -xzf $DEPS_FILENAME /
+          sudo tar -xzf $DEPS_FILENAME -C /
           rm $DEPS_FILENAME
 
       - name: Install prerequisites
