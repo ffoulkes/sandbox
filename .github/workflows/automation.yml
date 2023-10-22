@@ -19,7 +19,7 @@ env:
   #---------------------------------------------------------------------
   SDE_REPOSITORY: ffoulkes/p4-dev.dpdk-sde
   SDE_TAG: 2023.10.1
-  SDE_FILENAME: dpdk-sde-dev-ubuntu-20.04.tar.gz
+  SDE_FILENAME: dpdk-sde-dev-ubuntu.tar.gz
   SDE_PREFIX: p4-dev/dpdk-sde
 
   DEPS_REPOSITORY: ipdk-io/stratum-deps
