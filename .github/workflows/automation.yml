@@ -76,7 +76,7 @@ jobs:
         run: |
           export DEPEND_INSTALL=$DEPS_INSTALL_DIR
           export SDE_INSTALL=$SDE_INSTALL_DIR
-          ./make-all.sh --target=dpdk --rpath -j6
+          ./make-all.sh --target=dpdk --rpath -j10
 
   #---------------------------------------------------------------------
   # 2-krnlmon_unit_tests
