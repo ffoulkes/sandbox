@@ -104,7 +104,7 @@ jobs:
       - name: Extract tarball
         run: |
           mkdir -p $DEPS_PREFIX
-          tar -czf $DEPS_FILENAME --strip-components=1 -C $DEPS_PREFIX
+          tar -xzf $DEPS_FILENAME --strip-components=1 -C $DEPS_PREFIX
           rm ${{ env.DEPS_FILENAME }}
 
       # ----- ovs artifact -----
@@ -184,7 +184,7 @@ jobs:
       - name: Extract tarball
         run: |
           mkdir -p $DEPS_PREFIX
-          tar -czf $DEPS_FILENAME --strip-components=1 -C $DEPS_PREFIX
+          tar -xzf $DEPS_FILENAME --strip-components=1 -C $DEPS_PREFIX
           rm ${{ env.DEPS_FILENAME }}
 
       - name: Install prerequisites
