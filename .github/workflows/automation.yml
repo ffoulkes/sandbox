@@ -76,12 +76,12 @@ jobs:
         run: |
           export DEPEND_INSTALL=$DEPS_INSTALL_DIR
           export SDE_INSTALL=$SDE_INSTALL_DIR
-          ./make-all.sh --target=dpdk --prath
+          ./make-all.sh --target=dpdk --rpath
 
   #---------------------------------------------------------------------
-  # 2-krnlmon_tests
+  # 2-krnlmon_unit_tests
   #---------------------------------------------------------------------
-  krnlmon_tests:
+  krnlmon_unit_tests:
     runs-on: ubuntu-latest
 
     steps:
