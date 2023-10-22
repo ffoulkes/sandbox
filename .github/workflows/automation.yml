@@ -30,7 +30,7 @@ env:
   OVS_BUILD: ovs/build
   OVS_PREFIX: p4-dev/ovs
   OVS_ARTIFACT: p4cp-ovs
-  OVS_TARBALL: ovs-ubuntu-20.04.tar.gz
+  OVS_TARBALL: ovs-ubuntu-latest.tar.gz
 
   P4CP_PREFIX: p4-dev/p4cp-dpdk
 
@@ -41,7 +41,7 @@ jobs:
   # 1-build_ovs
   #---------------------------------------------------------------------
   build_ovs:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Clone networking-recipe
@@ -76,7 +76,7 @@ jobs:
   # 2-build_dpdk_p4cp
   #---------------------------------------------------------------------
   build_dpdk_p4cp:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     needs: build_ovs
 
     steps:
@@ -146,7 +146,7 @@ jobs:
   # 3-krnlmon_tests
   #---------------------------------------------------------------------
   krnlmon_tests:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Clone networking-recipe
