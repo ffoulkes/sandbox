@@ -19,13 +19,13 @@ env:
   #---------------------------------------------------------------------
   SDE_REPOSITORY: ffoulkes/p4-dev.dpdk-sde
   SDE_TAG: 2023.10.1
-  SDE_FILENAME: dpdk-sde-dev-ubuntu.tar.gz
-  SDE_PREFIX: p4-dev/dpdk-sde
+  SDE_FILENAME: dpdk-sde-dev-ubuntu-20.04.tar.gz
+  SDE_INSTALL_DIR: /opt/p4dev/dpdk-sde
 
   DEPS_REPOSITORY: ipdk-io/stratum-deps
   DEPS_TAG: v1.2.1
-  DEPS_FILENAME: deps-linux-x86_64.tar.gz
-  DEPS_PREFIX: p4-dev/deps
+  DEPS_FILENAME: deps-ubuntu-latest-x86_64.tar.gz
+  DEPS_INSTALL_DIR: /opt/p4dev/x86deps
 
   OVS_BUILD: ovs/build
   OVS_PREFIX: p4-dev/ovs
@@ -87,11 +87,12 @@ jobs:
           repository: ${{ env.SDE_REPOSITORY }}
           tag: ${{ env.SDE_TAG }}
           fileName: ${{ env.SDE_FILENAME }}
-          extract: true
 
-      - name: Remove tarball
+      - name: Install ${{ env.SDE_INSTALL_DIR }}
         run: |
-          rm ${{ env.SDE_FILENAME }}
+          sudo mkdir -pv --mode=go+w $SDE_INSTALL_DIR
+          tar -xzf $SDE_FILENAME /
+          rm $SDE_FILENAME
 
       # ----- stratum-deps release -----
       - name: Download stratum-deps
@@ -101,11 +102,11 @@ jobs:
           tag: ${{ env.DEPS_TAG }}
           fileName: ${{ env.DEPS_FILENAME }}
 
-      - name: Extract tarball
+      - name: Install ${{ env.DEPS_INSTALL_DIR }}
         run: |
-          mkdir -p $DEPS_PREFIX
-          tar -xzf $DEPS_FILENAME --strip-components=1 -C $DEPS_PREFIX
-          rm ${{ env.DEPS_FILENAME }}
+          sudo mkdir -pv --mode=go+w $DEPS_INSTALL_DIR
+          tar -xzf $DEPS_FILENAME /
+          rm $DEPS_FILENAME
 
       # ----- ovs artifact -----
       - name: Download ovs tarball
@@ -134,9 +135,9 @@ jobs:
       - name: Build P4CP for DPDK
         working-directory: recipe
         run: |
-          export DEPEND_INSTALL=$GITHUB_WORKSPACE/$DEPS_PREFIX
+          export DEPEND_INSTALL=$DEPS_INSTALL_DIR
           export OVS_INSTALL=$GITHUB_WORKSPACE/$OVS_PREFIX
-          export SDE_INSTALL=$GITHUB_WORKSPACE/$SDE_PREFIX
+          export SDE_INSTALL=$SDE_INSTALL_DIR
           export P4CP_INSTALL=$GITHUB_WORKSPACE/$P4CP_PREFIX
           mkdir -pv $P4CP_INSTALL
           cmake -S . -B build -DCMAKE_INSTALL_PREFIX=$P4CP_INSTALL -DSET_RPATH=ON -DTDI_TARGET=DPDK
@@ -167,11 +168,12 @@ jobs:
           repository: ${{ env.SDE_REPOSITORY }}
           tag: ${{ env.SDE_TAG }}
           fileName: ${{ env.SDE_FILENAME }}
-          extract: true
 
-      - name: Remove tarball
+      - name: Install ${{ env.SDE_INSTALL_DIR }}
         run: |
-          rm ${{ env.SDE_FILENAME }}
+          sudo mkdir -pv --mode=go+w $SDE_INSTALL_DIR
+          tar -xzf $SDE_FILENAME /
+          rm $SDE_FILENAME
 
       # ----- stratum-deps -----
       - name: Download stratum-deps
@@ -181,11 +183,11 @@ jobs:
           tag: ${{ env.DEPS_TAG }}
           fileName: ${{ env.DEPS_FILENAME }}
 
-      - name: Extract tarball
+      - name: Install ${{ env.DEPS_INSTALL_DIR }}
         run: |
-          mkdir -p $DEPS_PREFIX
-          tar -xzf $DEPS_FILENAME --strip-components=1 -C $DEPS_PREFIX
-          rm ${{ env.DEPS_FILENAME }}
+          sudo mkdir -pv --mode=go+w $DEPS_INSTALL_DIR
+          tar -xzf $DEPS_FILENAME /
+          rm $DEPS_FILENAME
 
       - name: Install prerequisites
         run: |
@@ -194,7 +196,7 @@ jobs:
       - name: Run unit tests
         working-directory: recipe/krnlmon/krnlmon
         run: |
-          export DEPEND_INSTALL=$GITHUB_WORKSPACE/$DEPS_PREFIX
-          export SDE_INSTALL=$GITHUB_WORKSPACE/$SDE_PREFIX
+          export DEPEND_INSTALL=$DEPS_INSTALL_DIR
+          export SDE_INSTALL=$SDE_INSTALL_DIR
           cmake -S . -B build -DTDI_TARGET=DPDK
           cmake --build build --target krnlmon-test
