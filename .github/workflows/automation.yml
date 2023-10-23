@@ -129,3 +129,40 @@ jobs:
           export SDE_INSTALL=$SDE_INSTALL_DIR
           cmake -S . -B build -DTDI_TARGET=DPDK
           cmake --build build --target krnlmon-test
+
+  #---------------------------------------------------------------------
+  # 3-stratum_unit_tests
+  #---------------------------------------------------------------------
+  stratum_unit_tests:
+    runs-on: ubuntu-latest
+    - name: Clone Stratum
+      uses: actions/checkout@v3
+      with:
+        repository: ipdk-io/stratum-dev
+        path: stratum-dev
+
+    - name: Install DPDK SDE
+      uses: robinraju/release-downloader@v1.8
+      with:
+        repository: ${{ env.SDE_REPOSITORY }}
+        tag: ${{ env.SDE_TAG }}
+        fileName: ${{ env.SDE_FILENAME }}
+
+    - run: |
+        sudo tar -xzf $SDE_FILENAME -C /
+        rm $SDE_FILENAME
+
+    - name: Run DPDK unit tests
+      working-directory: stratum-dev
+      run: |
+        export SDE_INSTALL=$SDE_INSTALL_DIR
+        echo "//stratum/glue/..." >> tests.txt
+        echo "//stratum/lib/..." >> tests.txt
+        echo "//stratum/public/..." >> tests.txt
+        echo "//stratum/hal/lib/common:all" >> tests.txt
+        echo "//stratum/hal/lib/p4:all" >> tests.txt
+        echo "//stratum/hal/lib/yang:all" >> tests.txt
+        cat tests.txt | xargs bazel test
+        echo "//stratum/hal/lib/tdi:all" >> tdi-tests.txt
+        echo "//stratum/hal/lib/tdi/dpdk:all" >> dpdk-tests.txt
+        cat tdi-tests.txt dpdk-tests.txt | xargs bazel test --define target=dpdk
