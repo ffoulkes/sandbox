@@ -79,7 +79,7 @@ jobs:
         run: |
           export DEPEND_INSTALL=$DEPS_INSTALL_DIR
           export SDE_INSTALL=$SDE_INSTALL_DIR
-          ./make-all.sh --target=dpdk --rpath -j10
+          ./make-all.sh --target=dpdk --rpath
 
   #---------------------------------------------------------------------
   # 2-krnlmon_unit_tests
@@ -131,3 +131,22 @@ jobs:
           export SDE_INSTALL=$SDE_INSTALL_DIR
           cmake -S . -B build -DTDI_TARGET=DPDK
           cmake --build build --target krnlmon-test
+
+  #---------------------------------------------------------------------
+  # 3-py_bandit_check
+  #---------------------------------------------------------------------
+  py_bandit_check:
+     timeout-minutes: 10
+     runs-on: ubuntu-latest
+     steps:
+       - name: Clone networking-recipe
+         uses: actions/checkout@v3
+         with:
+           path: recipe
+
+       - name: Check p4rt-ctl
+         uses: tj-actions/bandit@v5.1
+         with:
+           targets: |  # or a single string "."
+            ./recipe/clients/p4rt-ctl/p4rt-ctl.in
+           options: "-v"
