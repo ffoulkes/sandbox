@@ -1,17 +1,21 @@
-name: "P4 Control Plane automation"
+name: "P4 Control Plane CI Pipeline"
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - ipdk_v*
   pull_request:
-    branches: [main]
-
-  workflow_dispatch:
+    branches:
+      - main
+      - ipdk_v*
 
 concurrency:
   # If workflow for PR or push is already running, stop it and start a new one.
   group: build-${{ github.ref }}
   cancel-in-progress: true
+
+permissions: read-all
 
 env:
   #---------------------------------------------------------------------
